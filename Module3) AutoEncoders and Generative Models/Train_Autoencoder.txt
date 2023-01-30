@@ -1,0 +1,167 @@
+### Train an Autoencoder ###
+
+## Follow-Along ##
+# Imports 
+from keras.datasets import mnist
+from keras.layers import Input, Dense
+from keras.models import Model
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+(X_train, _), (X_test, _) = mnist.load_data()
+
+X_train = X_train.astype('float32')/255
+X_test = X_test.astype('float32')/255
+
+X_train = X_train.reshape(len(X_train), np.prod(X_train.shape[1:]))
+X_test = X_test.reshape(len(X_test), np.prod(X_test.shape[1:]))
+
+print(X_train.shape)
+print(X_test.shape)
+
+'''
+output:
+
+(60000, 784)
+(10000, 784)
+'''
+
+input_img = Input(shape=(784,))
+
+# Create simple autoencoder
+
+# the size of our encoder representations
+# 32 floats -> compression of factor 24.5, input is 784 floats
+encoding_dim = 32
+
+# 'encoded' is the encoded representation on input
+encoded = Dense(784, activation='relu')(input_img)
+
+#'decoded' os the lossy reconstruction of the input
+decoded = Dense(784, activation='sigmoid')(encoded)
+
+# This model maps an input to its recontruction
+autoencoder = Model(input_img, decoded)
+
+# This model maps an input to its encoded representation
+encoder = Model(input_img, encoded)
+
+autoencoder.summary()
+
+'''
+output:
+Model: "functional_1"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+input_1 (InputLayer)         [(None, 784)]             0         
+_________________________________________________________________
+dense (Dense)                (None, 32)                25120     
+_________________________________________________________________
+dense_1 (Dense)              (None, 784)               25872     
+=================================================================
+Total params: 50,992
+Trainable params: 50,992
+Non-trainable params: 0
+_________________________________________________________________
+'''
+
+encoder.summary()
+
+'''
+output:
+Model: "functional_3"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+input_1 (InputLayer)         [(None, 784)]             0         
+_________________________________________________________________
+dense (Dense)                (None, 32)                25120     
+=================================================================
+Total params: 25,120
+Trainable params: 25,120
+Non-trainable params: 0
+_________________________________________________________________
+'''
+
+# Now compile and fit autoencoder
+# Compile model
+autoencoder.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+# Fit model
+autoencoder.fit(X_train, X_train,
+                epochs=10,
+                batch_size=256,
+                validation_data=(X_test, X_test))
+
+'''
+output:
+Epoch 1/10
+235/235 [==============================] - 3s 12ms/step - loss: 0.2717 - accuracy: 0.0131 - val_loss: 0.1898 - val_accuracy: 0.0111
+Epoch 2/10
+235/235 [==============================] - 3s 12ms/step - loss: 0.1699 - accuracy: 0.0116 - val_loss: 0.1519 - val_accuracy: 0.0115
+Epoch 3/10
+235/235 [==============================] - 3s 12ms/step - loss: 0.1426 - accuracy: 0.0104 - val_loss: 0.1329 - val_accuracy: 0.0098
+Epoch 4/10
+235/235 [==============================] - 3s 12ms/step - loss: 0.1278 - accuracy: 0.0100 - val_loss: 0.1209 - val_accuracy: 0.0104
+Epoch 5/10
+235/235 [==============================] - 3s 12ms/step - loss: 0.1178 - accuracy: 0.0110 - val_loss: 0.1129 - val_accuracy: 0.0123
+Epoch 6/10
+235/235 [==============================] - 3s 12ms/step - loss: 0.1108 - accuracy: 0.0129 - val_loss: 0.1068 - val_accuracy: 0.0121
+Epoch 7/10
+235/235 [==============================] - 3s 12ms/step - loss: 0.1057 - accuracy: 0.0125 - val_loss: 0.1026 - val_accuracy: 0.0145
+Epoch 8/10
+235/235 [==============================] - 3s 12ms/step - loss: 0.1021 - accuracy: 0.0123 - val_loss: 0.0995 - val_accuracy: 0.0145
+Epoch 9/10
+235/235 [==============================] - 3s 12ms/step - loss: 0.0996 - accuracy: 0.0117 - val_loss: 0.0975 - val_accuracy: 0.0138
+Epoch 10/10
+235/235 [==============================] - 3s 12ms/step - loss: 0.0979 - accuracy: 0.0117 - val_loss: 0.0966 - val_accuracy: 0.0130
+
+
+
+
+
+<tensorflow.python.keras.callbacks.History at 0x7fd8ffcbd550>
+'''
+
+# make predictions
+encoded_imgs = encoder.predict(X_test)
+predicted = autoencoder.predict(X_test)
+
+# Plotting
+plt.figure(figsize=(40, 4))
+for i in range(10):
+    # display origional images
+    ax = plt.subplot(3, 20, i + 1)
+    plt.imshow(X_test[i].reshape(28, 28))
+    plt.gray()
+    ax.get_xaxis().set_visiable(False)
+    ax.get_yaxis().set_visiable(False)
+
+    # display encoded images
+    ax = plt.subplot(3, 20, i + 1 + 20)
+    plt.imshow(encoded_imgs[i].reshape(8,4))
+    plt.gray()
+    ax.get_xaxis().set_visiable(False)
+    ax.get_yaxis().set_visiable(False)
+
+    # Display reconstructed image
+    ax = plt.subplot(3, 20, 2 * 20 + i + 1)
+    plt.imshow(predicted[i].reshape(28,28))
+    plt.gray()
+    ax.get_xaxis().set_visiable(False)
+    ax.get_yaxis().set_visiable(False)
+
+plt.show()
+
+plt.clf()
+
+## Challenge: Add More Layers! ##
+# Deeper autoencoder
+encoded = Dense(units=128, activation='relu')(input_img)
+encoded = Dense(units=64, activation='relu')(encoded)
+encoded = Dense(units=32, activation='relu')(encoded)
+decoded = Dense(units=64, activation='relu')(encoded)
+decoded = Dense(units=128, activation='relu')(decoded)
+decoded = Dense(units=784, activation='sigmoid')(decoded)

@@ -1,0 +1,36 @@
+import requests
+import numpy as np
+import cv2
+
+img_url = "https://raw.githubusercontent.com/bloominstituteoftechnology/data-science-canvas-images/main/unit_4/palm_trees.jpg"
+
+r = requests.get(img_url)
+with open('palm_trees.jpg', 'wb') as f:
+  f.write(r.content)
+
+# Display the first image
+from IPython.display import Image
+#Image(filename='palm_trees.jpg', width=500)
+
+# import numpy as np 
+# import cv2
+
+# read in image
+img_src = cv2.imread('palm_trees.jpg')
+
+# Edge detection
+kernel = kernel/(np.sum(kernel) if np.sum(kernel) != - else 1)
+
+# Filter the source image
+img_rst = cv2.filter2d(img_src, -1, kernel)
+
+# save results image
+cv2.imwrite('palm_trees_edge.jpg', img_rst)
+
+#Image(filename='palm_trees_edge.jpg', width=500)
+
+'''
+output:
+
+True
+'''

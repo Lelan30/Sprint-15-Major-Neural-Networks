@@ -1,0 +1,80 @@
+### Use Pre-Trained Convolution Neural Network for Image Classification ###
+
+## Follow-Along ##
+# Imports
+from tensorflow.keras.applications.resnet50 import ResNet50
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.applications.resnet50 import preprocess_input, decode_predictions
+import requests
+import numpy as np
+
+# image Processing
+# Set Location for image test
+
+image_urls = ["https://raw.githubusercontent.com/bloominstituteoftechnology/data-science-canvas-images/main/unit_4/two_llamas.jpg",
+          "https://raw.githubusercontent.com/bloominstituteoftechnology/data-science-canvas-images/main/unit_4/cat_llama.jpg",
+          "https://raw.githubusercontent.com/bloominstituteoftechnology/data-science-canvas-images/main/unit_4/palm_trees.jpg"]
+
+# Write images to loacal file space
+for _id, img, in enumerate(image_urls):
+    r = requests.get(img)
+    with open(f'example{id}.jpg', 'wb') as f:
+        f.write(r.content)
+
+# Function to load images from path
+def process_img_path(img_path):
+    return image.load_img(img_path, target_size=(224, 224))
+
+# Determine if the image contains llama
+
+def img_contains(img):
+
+    # Convert the image to an array
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
+    x = preprocess_input(x)
+
+    # Instantiate
+    model = ResNet50(weights='imagenet')
+
+    # Predict which features the image has
+    features = model.predict(x)
+
+    # Decode the prediction and display the top three features
+    results = decode_predictions(features, top=3)[0]
+    print(results)
+
+# Display the first image
+from IPython.display import Image#Image(filename='./example0.jpg', width=300)
+
+# Return classification model
+img_contains_llama(process_img_path('example0.jpg'))
+
+'''
+output:
+
+[('n02437616', 'llama', 0.9999949), ('n02437312', 'Arabian_camel', 4.2163906e-06), ('n02412080', 'ram', 7.4659454e-07)]
+'''
+
+# The model identified the llama with a high degree of certainty
+
+# Test out second image
+#Image(filename='./example1.jpg', width=300)
+
+img_contains_llama(process_img_path('example1.jpg'))
+
+'''
+output: (Correctly identifies cat, second correct choice is 'tabby')
+[('n02124075', 'Egyptian_cat', 0.63906634), ('n02123045', 'tabby', 0.13549377), ('n02123159', 'tiger_cat', 0.07188996)]
+'''
+#Image(filename='./example2.jpg', width=300)
+
+img_contains_llama(process_img_path('example2.jpg'))
+
+'''
+output: (Classification isnt good (.55% certanty),
+         Seashores as forst result: although these specific trees are next to the ocean,
+         followed by 'obelisk' and 'buckeye': which is a type of tree that is NOT next to an ocean,
+         But the LEAVES on this tree DO resemble a buckeye )
+[('n09428293', 'seashore', 0.55565596), ('n03837869', 'obelisk', 0.099918865), ('n12768682', 'buckeye', 0.052723538)]
+'''

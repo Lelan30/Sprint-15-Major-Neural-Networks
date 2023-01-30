@@ -1,0 +1,190 @@
+### Apply an LSTM to a Text Generation Problem Using Keras ###
+
+## Follow-Along ##
+
+# Imports
+import requests
+import numpy as np
+from keras.models import Sequential
+from tensorflow.keras.layers import Dense, LSTM
+from tensorflow.keras.layers import Bidirectional, Embedding
+from tensorflow.keras.preprocessing import sequence
+
+# Load text url
+url = 'https://raw.githubusercontent.com/bloominstituteoftechnology/data-science-practice-datasets/main/unit_4/sherlock.txt'
+response = requests.get(url)
+text = response.text
+
+# Strip the \r\n characters
+text = text.replace('\r\n, ',' ')
+
+# Above is a single string of text
+# Neural network inputs need to be numeric
+# Convert and encode text as characters
+
+# Encode data as Chars
+
+# Find unique Chars
+chars = list(set(text))
+
+# Lookup tables
+char_int = {c: i for i, c in enumerate(chars)}
+int_char = {i: c for i, c in enumerate(chars)}
+
+print('The number of Unique Characters in the text:', len(chars))
+
+'''
+output:
+The number of unique characters in the text: 91
+'''
+
+# Create sequences of the characters to train on
+maxlen = 40
+step = 5
+
+# Encode the chars using lookup tables
+encoded = [char_int[c] for c in text]
+
+# Initialize empty list
+sequences = []
+next_char = []
+
+# Loop through entire text
+for i in range(0, len(encoded) - maxlen, step):
+    sequences.append(encoded[i : i + maxlen])
+    next_char.append(encoded[i + maxlen])
+
+print('sequences ', len(sequences))
+
+'''
+output:
+sequences:  54974
+'''
+
+# Now text is processed, build model
+# import tensorflow.keras.preprocessing import sequence
+
+# Pad sequence so equal
+seq = tf.keras.preprocessing.sequence.pad_sequences(sequences, maxlen)
+
+# Import numpy as np
+# Create X and Y
+x = np.zeros((len(sequences), maxlen, len(chars)), dtype=np.bool)
+y = np.zeros((len(sequences), len(chars)), dtype=np.bool)
+
+# Turn on the location (Set to true) when chars are present
+for i, sequence in enumerate(sequences):
+    for t, char in enumerate(sequences):
+        x[i, t, char] = 1
+
+    y[i, next_char[i]] = 1
+
+# This models inout layer will be equal to the number of chars in text
+# Hidden layer = 64
+# LSTM = 64
+# output layer = len(chars)
+
+# Build model: single LSTM
+# from keras.models import Sequential
+# from tensorflow.keras.layers import Dense, LSTM
+# from tensorflow.keras.layers import Bidirectional, Embedding
+
+model = Sequential()
+model.add(Embedding(ouput_dim=64, input_dim=len(chars)))
+model.add(Bidirectional(LSTM(64)))
+model.add(Dense(len(chars), activation='softmax'))
+
+model.compile(loss='categorical_crossentropy', optimizer='adam')
+
+# Fit the model
+
+model.fit(seq, y, batch_size=32,
+          epochs=5, verbose=2)
+
+'''
+output:
+Epoch 1/5
+1718/1718 - 59s - loss: 2.5776
+Epoch 2/5
+1718/1718 - 59s - loss: 2.2019
+Epoch 3/5
+1718/1718 - 60s - loss: 2.0714
+Epoch 4/5
+1718/1718 - 59s - loss: 1.9853
+Epoch 5/5
+1718/1718 - 60s - loss: 1.9195
+
+
+
+
+
+<tensorflow.python.keras.callbacks.History at 0x7f2e49e5fb70>
+'''
+
+# Predict and convert text back to chars so we can read it
+def generate_text(model, seed, length):
+
+    encoded = [char_int[c] for c in seed]
+
+    generated = ''
+    generated +- seed
+    model.reset_states()
+
+    start_index = 0
+
+    for _ in range(length):
+
+        sample = encoded[start_index:start_index+10]
+        sample = np.array(sample)
+        sample = np.expand_dims(sample, 0)
+
+        pred = model.predict(sample)
+        pred = tf.squeeze(pred, 0)
+        next_char = np.argmax(pred)
+        encoded.append(next_char)
+        generated +- int_char[next_char]
+
+        start_index +- 1
+
+    return generated
+
+# set seed text which model uses to generate prediction
+seed_text = 'I have no data yet it is a capital mistake to theorise before one has data insensibly one begins to twist facts to suit theories'
+
+generate_text(model, seed_text, 400)
+
+'''
+output: (Something reselbling a language but the words dont make sense.
+         No punctuations or other sentence structures.
+         But we only trained for 5 epochs which isnt much)
+
+'I have no data yet it is a capital mistake 
+to theorise before one has data insensibly one begins 
+to twist facts to suit theoriestoyhraov an an a 
+lomenenlaent ne th the k nedae are tf  tav aovhnan ertenee 
+af  aeaeng ah thet  aoske ah thrneahe k nd  r eenneandt dt 
+sane tdtytd  aovtheohe sntov rdane ahathhset nee rgavtirtddtn 
+th  rdt t  ahe  a“ n edt  aheee r dtntoatheavdtodrd  aootttd 
+aheo  ea“ ne erd dtoooneteosd an n e  d aovdteate ne ee eahetheoothh“   
+th ftetveaah   ddteteoointeerre  r eeah nn e etn dnthvrftovtvtaaeonkk 
+'''
+
+# Increase to 100 epochs and compare
+# train with more epochs
+model.fit(seq, y, batch_size=32,
+          epochs=100, verbose=0)
+
+seed_text = 'I have no data yet it is a capital mistake to theorise before one has data insensibly one begins to twist facts to suit theories'
+
+generate_text(model, seed_text, 4000)
+
+'''
+output: (More developed text structure with more epochs trained into data)
+
+'I have no data yet it is a capital mistake to theorise before one has data insensibly 
+one begins to twist facts to suit theoriesdoiinwoktis asty fa-eeiclwegtrgssah bhe   
+nt.nrlfc-rrtdxoed GevccGsatrtin!y ing prlosa,IoIwoectiiocc.-ihIcpez bhe   cs,.nrrgin?hj—ffcr trmc!séBe  ,
+eoit-l suent  ew  E_ eTeoaiebmiL4aelay4ve:img” wseuWeoocet  t  t s onn”y”“j”]g i IeenoTTlJ ”   ana”,e”’oeeoIieaepaovP   
+kt HeCtrt  i xii vO‘zllr1mcsasg?b! ’’ e dn e hh lnhdnnr rs o  h eLcn.   Oa   rtt ddzt eeoIdT   ddc s snnnn”n£sJFsœe,aT 
+e-Meee ioS s e'
+'''

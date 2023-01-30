@@ -1,0 +1,8 @@
+### Describe Components of an AutoEncoder ###
+## Autoencoder ##
+'''
+A type of neural network that learns, unsupervised, how to copy its input to the output.
+by approximation of input (Close to)...
+Compresses data in the input layer into smaller, less complex representations
+decodes that compressed representation ro match desired output better
+'''
